@@ -690,8 +690,26 @@ require('lazy').setup({
 
   {
     'princejoogie/tailwind-highlight.nvim',
-    ft = { 'html', 'javascriptreact', 'typescriptreact' },
-    opts = {},
+    ft = { 'html', 'css', 'javascriptreact', 'typescriptreact' },
+    event = 'LspAttach',
+    config = function()
+      vim.api.nvim_create_autocmd('LspAttach', {
+        callback = function(args)
+          local client = vim.lsp.get_client_by_id(args.data.client_id)
+          if not client then
+            return
+          end
+
+          -- Safe guarded setup
+          local ok, tailwind = pcall(require, 'tailwind-highlight')
+          if ok then
+            -- inject client so plugin doesn't try to get it itself
+            -- use protected call in case plugin is still broken
+            pcall(tailwind.setup, { client = client })
+          end
+        end,
+      })
+    end,
   },
 
   { -- Autocompletion
